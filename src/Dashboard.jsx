@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { postRequest } from './utils/api';  // Make sure to import the utility function
-
+import Navvbar from './Navbar';  // Import the Navbar component
+import { getRequest, postRequest, deleteRequest } from './utils/api';  // Make sure to import the utility function
 import { useLocation, useNavigate } from 'react-router-dom';
+import DashboardView from './DashboardView';
+import CreateAlbum from './CreateAlbum';
 
 const Dashboard = () => {
   const location = useLocation();  // To get the state passed through navigation
@@ -10,60 +12,51 @@ const Dashboard = () => {
   const [albums, setAlbums] = useState([]);
 
 
-//   const fetchAlbums = async () => {
-//     try {
-//       // Fetch albums from the server
-//         const data = await postRequest("/albums", { email, password });
-//     }
-//     catch (error) {
-//         console.error('Error fetching albums:', error);
-//         throw error;
-//         }
-//   };
+    // Fetch albums
+    const fetchAlbums = async () => {
+        try {
+            // Make a request to the backend to fetch albums
+            const data = await getRequest("/albums");
+            console.log("Albums data:", data);
+            setAlbums(data.albums);
+        } catch (error) {
+            console.error("Fetch albums error:", error);
+        }
+    };
 
-//     useEffect(() => {
-//     fetchAlbums();
-//     }, []);
+    const deleteAlbums = async (id) => {
+        const isConfirmed = window.confirm("Are you sure you want to delete this album?");
+    
+        if (!isConfirmed) return;
+    
+        try {
+            // Make a request to the backend to delete an album
+            const data = await deleteRequest(`/albums/${id}/delete`);
+            console.log("Album deleted:", data);
+            alert("Album deleted successfully!");
+            setAlbums(albums.filter((album) => album.id !== id));
 
-  // Handle create album
-  const handleCreateAlbum = () => {
-    console.log('Creating a new album...');
-    // You can add the logic to create a new album here, e.g., open a modal or redirect
-  };
-
-  // Handle adding image to album
-  const handleAddImageToAlbum = () => {
-    console.log('Adding image to album...');
-    // You can add the logic for selecting and uploading an image to an album here
-  };
-
-  // Handle logout
-  const handleLogout = async () => {
-    try {
-      // Make a request to the backend to clear the cookie
-      await postRequest("/logout");
-      // Remove any local storage or session data if necessary
-      localStorage.removeItem('token'); // If you store anything in local storage
-      alert("Successfully logged out"); // Optional feedback for user
-      // Redirect the user to the login page
-      navigate('/');
-    } catch (error) {
-      console.error("Logout error:", error);
+        } catch (error) {
+            console.error("Delete album error:", error);
+        }
     }
-  };
+    
+
+    useEffect(() => {
+        try {
+            fetchAlbums();
+        } catch (error) {
+            console.error("Fetch albums error:", error);
+        }
+    }, []);
+
   
 
   return (
     <div>
-      <h1>Dashboard</h1>
+      {/* <Navvbar/> */}
       {email && <p>Welcome back, {email}!</p>}
-      
-      {/* Buttons */}
-      <div>
-        <button onClick={handleCreateAlbum}>Create Album</button>
-        <button onClick={handleAddImageToAlbum}>Add Image to Album</button>
-        <button onClick={handleLogout}>Logout</button>
-      </div>
+      <DashboardView albums={albums} handleDelete={deleteAlbums} />
     </div>
   );
 };

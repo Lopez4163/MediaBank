@@ -115,9 +115,154 @@ app.post('/login', async (req, res) => {
 // app.get('/profile', verifyToken, (req, res) => {
 //   res.status(200).json({ message: 'Protected route', user: req.user });
 // });
+
+// Check if user is logged in
+// Check if user is logged in
+app.get('/check-login', verifyToken, (req, res) => {
+  // If verifyToken allows the request to proceed, the user is logged in
+  res.status(200).json({ loggedIn: true, user: req.user });
+});
+
 app.get('/dashboard', verifyToken, (req, res) => {
   res.status(200).json({ message: 'Protected route', user: req.user });
   console.log('Protected route', req.user);
+});
+
+app.get('/albums', verifyToken, async (req, res) => {
+  try {
+    const albums = await prisma.album.findMany({
+      where: { userId: req.user.userId },
+      select: { id: true, name: true, description: true },
+    });
+
+    res.status(200).json({ albums });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error });
+  }
+}
+);
+
+// Get album by ID route
+app.get("/albums/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Query the database for the album by ID
+    const album = await prisma.album.findUnique({
+      where: {
+        id: parseInt(id), // Make sure to convert id to a number
+      },
+    });
+
+    if (!album) {
+      return res.status(404).json({ message: "Album not found" });
+    }
+
+    // Send the album details as the response
+    res.json(album);
+  } catch (error) {
+    console.error("Error fetching album:", error);
+    res.status(500).json({ message: "An error occurred while fetching the album" });
+  }
+});
+
+
+
+// Backend route for creating an album
+app.post('/albums', async (req, res) => {
+  const { name, description, categoryId, userId } = req.body;
+
+  try {
+    const newAlbum = await prisma.album.create({
+      data: {
+        name,
+        description,
+        // categoryId, // SOON TO COME
+        userId, // Assuming userId is passed from the client
+      },
+    });
+
+    res.status(201).json({ message: 'Album created successfully', album: newAlbum });
+  } catch (error) {
+    console.error('Error creating album:', error);
+    res.status(500).json({ message: 'Error creating album', error });
+  }
+});
+
+// Delete album route
+app.delete('/albums/:id/delete', verifyToken, async (req, res) => {
+  const albumId = parseInt(req.params.id); // Get album ID from the URL parameter
+  const userId = req.user.userId; // Get user ID from the JWT
+
+  try {
+    // Find the album to check if it belongs to the logged-in user
+    const album = await prisma.album.findUnique({
+      where: { id: albumId },
+    });
+
+    if (!album) {
+      return res.status(404).json({ message: 'Album not found' });
+    }
+
+    if (album.userId !== userId) {
+      return res.status(403).json({ message: 'You are not authorized to delete this album' });
+    }
+
+    // Delete the album
+    await prisma.album.delete({
+      where: { id: albumId },
+    });
+
+    res.status(200).json({ message: 'Album deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting album:', error);
+    res.status(500).json({ message: 'Error deleting album', error });
+  }
+});
+
+// Delete image within an album route
+app.delete('/albums/:albumId/images/:imageId', verifyToken, async (req, res) => {
+  const albumId = parseInt(req.params.albumId); // Get album ID from the URL parameter
+  const imageId = parseInt(req.params.imageId); // Get image ID from the URL parameter
+  const userId = req.user.userId; // Get user ID from the JWT
+
+  try {
+    // Find the album to check if it belongs to the logged-in user
+    const album = await prisma.album.findUnique({
+      where: { id: albumId },
+    });
+
+    if (!album) {
+      return res.status(404).json({ message: 'Album not found' });
+    }
+
+    if (album.userId !== userId) {
+      return res.status(403).json({ message: 'You are not authorized to delete this image' });
+    }
+
+    // Find the image in the album
+    const image = await prisma.image.findUnique({
+      where: { id: imageId, albumId: albumId },
+    });
+
+    if (!image) {
+      return res.status(404).json({ message: 'Image not found in the specified album' });
+    }
+
+    // Optionally, you can also delete the image file from storage (if you store files on the server)
+    // Example: if you use filesystem storage, you could use fs.unlinkSync() to remove the image from disk.
+    // If you're using a cloud service like AWS S3, you would use their SDK to delete the file.
+    
+    // Delete the image from the database
+    await prisma.image.delete({
+      where: { id: imageId },
+    });
+
+    res.status(200).json({ message: 'Image deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting image:', error);
+    res.status(500).json({ message: 'Error deleting image', error });
+  }
 });
 
 // Logout route (to clear the cookie)
