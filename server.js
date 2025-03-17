@@ -46,7 +46,7 @@ const verifyToken = (req, res, next) => {
 
 // Signup route
 app.post('/signup', async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, name } = req.body;
 
   try {
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -57,7 +57,7 @@ app.post('/signup', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = await prisma.user.create({
-      data: { email, password: hashedPassword },
+      data: { email, password: hashedPassword, name },
     });
 
     const token = generateToken(newUser);
@@ -165,6 +165,25 @@ app.get("/albums/:id", async (req, res) => {
     res.status(500).json({ message: "An error occurred while fetching the album" });
   }
 });
+
+app.get('/users/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Fetch user by id from the database
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(id, 10) },  // Convert id to number
+    });
+
+    if (user) {
+      res.status(200).json(user);  // Return user data as JSON
+    } else {
+      res.status(404).json({ error: 'User not found' });  // User not found
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'An error occurred while fetching the user' });
+  }
+});
+
 
 
 

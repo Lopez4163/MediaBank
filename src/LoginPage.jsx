@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { useNavigate } from 'react-router-dom'; // Import the useNavigate hook
 import { postRequest } from './utils/api';  // Make sure to import the utility function
 
-const LoginPage = () => {
+const LoginPage = ({ checkLoginStatus }) => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();  // Hook to navigate programmatically
 
@@ -16,6 +16,11 @@ const LoginPage = () => {
 
       // If the response status is 200, navigate to the dashboard
       console.log("Login successful", data);
+
+      // Check login status
+      await checkLoginStatus();
+
+      // Navigate to the dashboard
       navigate('/dashboard', { state: { email } });  // Pass email via state
 
     } catch (error) {

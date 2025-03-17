@@ -6,8 +6,8 @@ const DashboardView = ({ albums, handleDelete }) => {
 
   return (
     <div className="pt-25"> {/* Adding padding-top to avoid content being under the fixed navbar */}
-      <h1 className="text-3xl font-bold text-center mb-6">Dashboard View</h1>
-      <h2 className="text-2xl text-center mb-4">Albums</h2>
+      {/* <h1 className="text-3xl font-bold text-center mb-6">Dashboard View</h1> */}
+      <h2 className="text-3xl font-bold text-center mb-6">Albums</h2>
 
       {/* Container for the album grid */}
       <div className="flex flex-wrap gap-20 justify-center">

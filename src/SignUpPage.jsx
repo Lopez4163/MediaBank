@@ -3,18 +3,18 @@ import { Link, useNavigate } from "react-router-dom";
 import SignUpForm from "./SignUpForm";
 import { postRequest } from './utils/api';
 
-const SignUpPage = () => {
+const SignUpPage = ({ checkLoginStatus }) => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSignUpAndLogin = async ({ email, password }) => {
+  const handleSignUpAndLogin = async ({ email, password, name }) => {
     setLoading(true);
     setError(""); // Reset previous errors
   
     try {
       // Sign up user
-      const signUpData = await postRequest("/signup", { email, password });
+      const signUpData = await postRequest("/signup", { email, password, name });
       console.log("Sign-up successful:", signUpData);
 
       // Log in user
@@ -23,6 +23,9 @@ const SignUpPage = () => {
 
       // Save user ID to local storage
       localStorage.setItem('userId', loginData.user.id);
+
+      // Check login status
+      await checkLoginStatus();
 
       // Navigate to dashboard
       navigate('/dashboard', { state: { email } });

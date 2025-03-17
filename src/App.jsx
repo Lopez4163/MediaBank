@@ -14,45 +14,46 @@ import { getRequest } from './utils/api';
 
 function App() {
 const [isLoggedIn, setIsLoggedIn] = useState(false);
-const [user, setUser] = useState({});
+const [userId, setUserId] = useState({});
 
   const checkLoginStatus = async () => {
     try {
       const response = await getRequest("/check-login");
       console.log('Response:', response);
-      const { loggedIn } = response;
-      console.log('logged in:', loggedIn);
-    if(response.loggedIn) {
+      const { loggedIn, user } = response;
+
+      if (loggedIn) {
         setIsLoggedIn(true);
-        setUser(response.user);
+        setUserId(user.userId);
+        console.log('User ID:', user.userId);
+      } else {
+        setIsLoggedIn(false);
       }
     } catch (error) {
       console.error("Check login status error:", error);
-      if(error.message === "Unauthorized") {
-        setIsLoggedIn(false);
-    }
+      setIsLoggedIn(false); // In case of an error, set logged in status to false
     }
   };
   
   useEffect(() => {
     checkLoginStatus();
   }
-  , [isLoggedIn]);
+  , []);
 
   console.log('Is logged in:', isLoggedIn);
 
 
   return (
     <Router>
-      <div className="App">
-      <Navvbar isLoggedIn={isLoggedIn}/>
+      <div className="app">
+        <Navvbar isLoggedIn={isLoggedIn} checkLoginStatus={checkLoginStatus}/>
         <Routes>
-          <Route path="/" element={<LoginPage />} />
-          <Route path="/signup" element={<SignUpPage />} />
+          <Route path="/" element={<LoginPage checkLoginStatus={checkLoginStatus} />} />
+          <Route path="/signup" element={<SignUpPage checkLoginStatus={checkLoginStatus}/>} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/create-album" element={<CreateAlbum />} />
           <Route path="/album/:id" element={<SelectedAlbumView />} />
-          <Route path="/profile" element={<Profile user={user}/>} />
+          <Route path="/profile" element={<Profile userId={userId}/>} />
           {/* <Route
             path="/dashboard"
             element={

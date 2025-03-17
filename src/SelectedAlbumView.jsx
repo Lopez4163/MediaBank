@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { getRequest } from './utils/api';
 import SelectedAlbumNavbar from './SelectedAlbumNavbar';
+import AlbumImages from './AlbumImages';
 
 const SelectedAlbumView = () => {
     const [album, setAlbum] = useState({});
@@ -26,14 +27,10 @@ const SelectedAlbumView = () => {
     console.log('Selected album:', album);
 
   return (
-    <div className="pt-25"> {/* Adjust pt-16 to match your navbar height */}
+    <div className="pt-20"> {/* Adjust pt-16 to match your navbar height */}
         <SelectedAlbumNavbar albumName={album.name} albumDescription={album.description} />
-        {/* <div>
-            <h1>Selected Album</h1>
-            <p>Album ID: {id}</p>
-            <p>Name: {album.name}</p>
-            <p>Description: {album.description}</p>
-        </div> */}
+        <AlbumImages album={album} />
+        
     </div>
   )
 }

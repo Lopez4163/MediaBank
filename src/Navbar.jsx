@@ -1,21 +1,48 @@
-import React from 'react'
+import React, { useState,useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { postRequest } from './utils/api';
+import { postRequest, getRequest } from './utils/api';
 
-const Navbar = ({ isLoggedIn }) => {
+const Navbar = ({ isLoggedIn, checkLoginStatus }) => {
   const navigate = useNavigate();
+  // const [isLoggedIn, setIsLoggedIn] = useState(false);
+  // const [userId, setUserId] = useState(null);
 
-  const handleLogout = async () => {
-    try {
-      await postRequest("/logout");
-      localStorage.removeItem('token');
-      alert("Successfully logged out");
-      navigate('/');
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
-  };
+  // const checkLoginStatus = async () => {
+  //   try {
+  //     const response = await getRequest("/check-login");
+  //     const { loggedIn, user } = response;
 
+  //     if (loggedIn) {
+  //       setIsLoggedIn(true);
+  //       setUserId(user.userId);
+  //     } else {
+  //       setIsLoggedIn(false);
+  //     }
+  //   } catch (error) {
+  //     setIsLoggedIn(false);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   checkLoginStatus();
+  // }, []);
+
+    const handleLogout = async () => {
+      try {
+        confirm("Are you sure you want to logout?");
+        if(confirm) {
+          console.log("Logging out...");
+          await postRequest("/logout");
+          localStorage.removeItem('token');
+          alert("Successfully logged out");
+          await checkLoginStatus();
+          navigate('/');
+        } 
+      } catch (error) {
+        console.error("Logout error:", error);
+      }
+    };
+  
   return (
     <nav className="bg-white shadow-md w-full fixed z-10">
       <div className="p-2">
@@ -24,40 +51,23 @@ const Navbar = ({ isLoggedIn }) => {
           <li>
             <Link
               onClick={() => navigate('/dashboard')}  
-              className="text-xl font-semibold text-gray-800"
+              className="text-2xl font-semibold text-gray-800"
             >
               MediaBank
             </Link>
           </li>
 
           {/* Links and Buttons */}
-          <li>
-            <Link 
-              to="/dashboard" 
-              className="text-gray-600 font-bold hover:text-purple-500 transition duration-300"
-            >
-              Dashboard
-            </Link>
-          </li>
 
           {/* Conditionally render links/buttons if user is logged in */}
           {isLoggedIn && (
             <>
-            
-              <li>
+                <li>
                 <Link 
-                  to="/profile" 
+                  to="/dashboard" 
                   className="text-gray-600 font-bold hover:text-purple-500 transition duration-300"
                 >
-                  Profile
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/albums" 
-                  className="text-gray-600 font-bold hover:text-purple-500 transition duration-300"
-                >
-                  Albums
+                  Albums{/* ##WILL BE LATER DASHBOARD  */}
                 </Link>
               </li>
               <li>
@@ -68,6 +78,22 @@ const Navbar = ({ isLoggedIn }) => {
                   Create Album
                 </Link>
               </li>
+              <li>
+                <Link 
+                  to="/profile" 
+                  className="text-gray-600 font-bold hover:text-purple-500 transition duration-300"
+                >
+                  Profile
+                </Link>
+              </li>
+              {/* <li>
+                <Link 
+                  to="/albums" 
+                  className="text-gray-600 font-bold hover:text-purple-500 transition duration-300"
+                >
+                  Albums
+                </Link>
+              </li> */}
               {/* <li>
                 <button 
                   className="bg-blue-500 text-white p-1.5 rounded-lg  hover:bg-blue-600 transition duration-300 hover:cursor-pointer"

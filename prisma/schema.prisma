@@ -9,6 +9,7 @@ generator client {
 
 model User {
   id        Int      @id @default(autoincrement())
+  name      String   
   email     String   @unique
   password  String
   createdAt DateTime @default(now())
@@ -24,7 +25,9 @@ model Album {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   user          User     @relation(fields: [userId], references: [id])
+  path          String  @default("default/album/path")
   images        Image[]  // One album can have many images
+  
 }
 
 // Commented out AlbumCategory model
@@ -45,6 +48,8 @@ model Image {
   updatedAt   DateTime @updatedAt
   album       Album    @relation(fields: [albumId], references: [id])
   tags        Tag[]    // Many-to-many relationship with tags
+  path        String   @default("default/album/path")  // Default path value
+
 }
 
 model Tag {

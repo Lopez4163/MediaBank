@@ -26,7 +26,7 @@ const SelectedAlbumNavbar = ({ albumName, albumDescription}) => {
         
 
   return (
-    <nav className='shadow-md w-full z-10 pt-20 bg-gray-800 text-white'>
+    <nav className='shadow-md w-full z-10 bg-gray-800 text-white'>
         <div className="p-2">
             <ul className="flex justify-around items-center h-16">
                 {/* Logo */}

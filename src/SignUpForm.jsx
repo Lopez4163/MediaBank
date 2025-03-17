@@ -3,6 +3,7 @@ import { useState } from "react";
 const SignUpForm = ({ onSubmit, title, loading }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
 
@@ -15,7 +16,7 @@ const SignUpForm = ({ onSubmit, title, loading }) => {
     }
 
     setError(""); // Clear previous errors
-    onSubmit({ email, password });
+    onSubmit({ email, password, name });
   };
 
   return (
@@ -24,6 +25,15 @@ const SignUpForm = ({ onSubmit, title, loading }) => {
       className="bg-white shadow-md rounded-xl p-8 w-full max-w-md"
     >
       <h2 className="text-2xl font-semibold mb-4 text-center">{title}</h2>
+
+      <input 
+        type="text"
+        placeholder="Name"
+        required
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        className="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
       
       <input
         type="email"
