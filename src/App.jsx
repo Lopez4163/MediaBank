@@ -8,6 +8,7 @@ import Navvbar from './Navbar';
 import ProtectedRoute from './ProtectedRoute'; // Import ProtectedRoute
 import SelectedAlbumView from './SelectedAlbumView';
 import Profile from './Profile';
+import HomePage from './HomePage';
 import { useState, useEffect } from 'react';
 import { getRequest } from './utils/api';
 
@@ -48,7 +49,8 @@ const [userId, setUserId] = useState({});
       <div className="app">
         <Navvbar isLoggedIn={isLoggedIn} checkLoginStatus={checkLoginStatus}/>
         <Routes>
-          <Route path="/" element={<LoginPage checkLoginStatus={checkLoginStatus} />} />
+          <Route path="/" element={<HomePage />} />
+          <Route path="/login" element={<LoginPage checkLoginStatus={checkLoginStatus} />} />
           <Route path="/signup" element={<SignUpPage checkLoginStatus={checkLoginStatus}/>} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/create-album" element={<CreateAlbum />} />

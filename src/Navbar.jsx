@@ -50,7 +50,7 @@ const Navbar = ({ isLoggedIn, checkLoginStatus }) => {
           {/* Logo */}
           <li>
             <Link
-              onClick={() => navigate('/dashboard')}  
+              onClick={() => navigate('/')}  
               className="text-2xl font-semibold text-gray-800"
             >
               MediaBank

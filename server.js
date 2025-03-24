@@ -5,6 +5,10 @@ import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import cookieParser from 'cookie-parser'; // Import cookie-parser
+import multer from 'multer';
+import fs from 'fs';
+import path from 'path';
+
 
 dotenv.config();
 
@@ -12,9 +16,13 @@ const prisma = new PrismaClient();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const __dirname = path.dirname(new URL(import.meta.url).pathname);
+
 app.use(cors({ origin: 'http://localhost:5173', credentials: true })); // Allow cross-origin requests from your frontend and allow cookies
 app.use(cookieParser());  // Use cookie-parser middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 
 // Function to generate a JWT token
 const generateToken = (user) => {
@@ -24,6 +32,43 @@ const generateToken = (user) => {
     { expiresIn: '1h' }
   );
 };
+
+// Middleware to extract userId and albumName
+// const extractFields = (req, res, next) => {
+//   console.log('extractingFields.....', req.body);
+//   const { userId, albumName, albumId } = req.body;
+  
+//   if (!userId || !albumName) {
+//     return res.status(400).json({ error: 'Missing userId or albumName' });
+//   }
+//   req.userId = userId;
+//   req.albumName = albumName;
+//   req.albumId = albumId;
+//   next();
+// };
+
+
+
+//###################### MULTER MIDDLEWARE #####################
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    console.log('mutler storage....')
+    const { userId, albumName } = req;
+    const uploadPath = path.join(__dirname, `../uploads/${userId}/${albumName}`);
+    fs.mkdirSync(uploadPath, { recursive: true });
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  }
+});
+const upload = multer({ storage }).fields([
+  { name: 'userId', maxCount: 1 },    // Explicitly declare fields
+  { name: 'albumName', maxCount: 1 }, // Multer will parse these
+  { name: 'image', maxCount: 1 }      // And the file
+]);
+// const upload = multer({ storage });
+//###################################################################
 
 // Middleware to verify JWT token
 const verifyToken = (req, res, next) => {
@@ -44,6 +89,77 @@ const verifyToken = (req, res, next) => {
   });
 };
 
+
+// Multer Middleware
+// const upload = multer({ storage: storage });
+
+//############ FOR CREATING USER DIRECTORY ############
+const ensureUserDirectoryExists = (userId) => {
+  try {
+    console.log('Ensuring user directory exists:', userId);
+    const userDir = path.join(__dirname, `../uploads/${userId}`);
+    console.log('User directory:', userDir);
+    if (!fs.existsSync(userDir)) {
+      fs.mkdirSync(userDir, { recursive: true }); // Create the user directory if it doesn't exist
+    }
+  } catch (error) {
+    console.error('Error ensuring user directory exists:', error);
+  }
+};
+//######################################################
+
+
+
+//#################### FOR CREATING ALBUM #######################
+const ensureAlbumDirectoryExists = (userId, albumName) => {
+  console.log('Ensuring album directory exists:', userId, albumName);
+  try {
+    console.log(`Ensuring album directory exists for user ${userId}:`, albumName);
+    const albumDir = path.join(__dirname, `../uploads/${userId}/${albumName}`);
+    
+    if (!fs.existsSync(albumDir)) {
+      fs.mkdirSync(albumDir, { recursive: true }); // Create the album directory if it doesn't exist
+      console.log(`Album directory created: ${albumDir}`);
+    }
+    return albumDir;
+  } catch (error) {
+    console.error('Error ensuring album directory exists:', error);
+    return null
+  }
+};
+//#################################################################
+
+
+//################################ FOR UPLOADING IMAGES ############################
+const addImageToAlbum = async (userId, albumName, imageFile) => {
+  console.log('Adding image to album:', userId, albumName, imageFile);
+  try {
+    const albumDir = ensureAlbumDirectoryExists(userId, albumName);
+    if (!albumDir) throw new Error('Album directory error');
+
+    const fileName = `${Date.now()}-${imageFile.originalname}`;
+    const imagePath = path.join(albumDir, fileName);
+    
+    // Use fs.promises for async operations
+    await fs.promises.rename(imageFile.path, imagePath);
+    
+    // Return relative path for web access
+    return `/uploads/${userId}/${albumName}/${fileName}`;
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    // Clean up temp file if exists
+    if (imageFile?.path) fs.unlinkSync(imageFile.path);
+    return null;
+  }
+};
+//####################################################################################
+
+
+// Initialize multer with the storage configuration
+// const upload = multer({ storage }).single('image'); // Handle one image file upload
+
+
+
 // Signup route
 app.post('/signup', async (req, res) => {
   const { email, password, name } = req.body;
@@ -59,6 +175,9 @@ app.post('/signup', async (req, res) => {
     const newUser = await prisma.user.create({
       data: { email, password: hashedPassword, name },
     });
+
+    // Create a user directory for storing images
+     ensureUserDirectoryExists(newUser.id);
 
     const token = generateToken(newUser);
     console.log('Generated token (signup):', token);
@@ -111,15 +230,9 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// Protected route example (accessible only with a valid token)
-// app.get('/profile', verifyToken, (req, res) => {
-//   res.status(200).json({ message: 'Protected route', user: req.user });
-// });
 
 // Check if user is logged in
-// Check if user is logged in
 app.get('/check-login', verifyToken, (req, res) => {
-  // If verifyToken allows the request to proceed, the user is logged in
   res.status(200).json({ loggedIn: true, user: req.user });
 });
 
@@ -190,6 +303,9 @@ app.get('/users/:id', async (req, res) => {
 // Backend route for creating an album
 app.post('/albums', async (req, res) => {
   const { name, description, categoryId, userId } = req.body;
+  const albumName = name
+  ensureUserDirectoryExists(userId);
+  const albumPath = ensureAlbumDirectoryExists(userId, albumName );
 
   try {
     const newAlbum = await prisma.album.create({
@@ -198,8 +314,10 @@ app.post('/albums', async (req, res) => {
         description,
         // categoryId, // SOON TO COME
         userId, // Assuming userId is passed from the client
+        path: albumPath,
       },
     });
+
 
     res.status(201).json({ message: 'Album created successfully', album: newAlbum });
   } catch (error) {
@@ -207,6 +325,71 @@ app.post('/albums', async (req, res) => {
     res.status(500).json({ message: 'Error creating album', error });
   }
 });
+
+// Upload image route
+app.post('/upload-image', 
+  (req, res, next) => {
+    upload(req, res, (err) => {
+      if (err) return res.status(400).json({ error: err.message });
+      
+      // Fields are now in req.body
+      const { userId, albumName } = req.body;
+      if (!userId || !albumName) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+      
+      // Attach to request for storage config
+      req.userId = userId;
+      req.albumName = albumName;
+      next();
+    });
+  },
+  async (req, res) => {
+  console.log('POST /upload-image', req.body); // ✅ Confirm request reached backend
+
+  const { userId, albumName, path } = req.body // Get userId and albumName from the request object
+
+  try {
+    // Ensure the album directory exists and get the path
+    const albumDir = ensureAlbumDirectoryExists(userId, albumName);
+
+    if (!albumDir) {
+      return res.status(500).json({ message: 'Album directory could not be created or found.' });
+    }
+
+    const imagePath = addImageToAlbum(userId, albumName, req.file);
+
+    // Find the album ID by album name and userId
+    const album = await prisma.album.findUnique({
+      where: {
+          name: albumName,
+          id: parseInt(userId),
+        },
+    });
+
+    if (!album) {
+      return res.status(404).json({ message: 'Album not found.' });
+    }
+
+    // Create a new image record in the database
+    const image = await prisma.image.create({
+      data: {
+        albumId: album.id,   // Use the album's ID
+        url: path,       // Store the file path
+        description: req.body.description || '',  // Optional description
+        path: path,      // Path to the image file
+      },
+    });
+
+    res.status(200).json({ message: 'Image uploaded successfully!', image: image });
+
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    res.status(500).json({ message: 'Failed to upload image.' });
+  }
+});
+
+
 
 // Delete album route
 app.delete('/albums/:id/delete', verifyToken, async (req, res) => {

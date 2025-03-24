@@ -39,7 +39,7 @@ const SignUpPage = ({ checkLoginStatus }) => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+    <div className="flex justify-center items-center min-h-screen bg-[#242424]">
       <div className="w-full max-w-md">
         <SignUpForm 
           onSubmit={handleSignUpAndLogin} 
@@ -52,11 +52,11 @@ const SignUpPage = ({ checkLoginStatus }) => {
         )}
 
         <div className="mt-6 text-center">
-          <p className="text-gray-600">Already have an account?</p>
-          <Link to="/">
+          <p className="text-white">Already have an account?</p>
+          <Link to="/login">
             <button 
               disabled={loading}
-              className={`mt-2 bg-gray-500 text-white w-full py-3 rounded-lg hover:bg-gray-600 transition ${
+              className={`mt-2 bg-blue-500 text-white w-70 py-3 rounded-lg hover:bg-blue-600 transition ${
                 loading ? "opacity-50 cursor-not-allowed" : ""
               }`}
             >
